@@ -4,6 +4,7 @@ import {
   aws_lambda as lambda,
   aws_dynamodb as dynamodb,
   aws_apigateway as apigateway,
+  aws_s3 as s3,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
@@ -16,7 +17,12 @@ export class ServerlessCrudTestStack extends Stack {
   constructor(scope: Construct, id: string, props?: EvnStackProps) {
     super(scope, id, props);
 
-    let tableName, lambdaConst, apiGatewayName, dynamodbReadWrite, concurrency;
+    let tableName,
+      bucketName,
+      lambdaConst,
+      apiGatewayName,
+      dynamodbReadWrite,
+      concurrency;
 
     if (props?.prod) {
       dynamodbReadWrite = 200;
@@ -24,11 +30,13 @@ export class ServerlessCrudTestStack extends Stack {
       tableName = "prod-serverless-crud";
       lambdaConst = { TABLE_NAME: tableName };
       apiGatewayName = "prod-api-gw";
+      bucketName = "prod-crud-app";
     } else {
       dynamodbReadWrite = 5;
       concurrency = 5;
       tableName = "staging-serverless-crud";
       apiGatewayName = "staging-api-gw";
+      bucketName = "staging-crud-app";
     }
 
     const welcomeLambda = new lambda.Function(this, "helloHandler", {
@@ -51,6 +59,23 @@ export class ServerlessCrudTestStack extends Stack {
 
     apiHello.addMethod("GET", apiHelloIntg, {
       authorizationType: apigateway.AuthorizationType.NONE,
+    });
+
+    const table = new dynamodb.Table(this, tableName, {
+      partitionKey: {
+        name: "id",
+        type: dynamodb.AttributeType.STRING,
+      },
+      tableName: tableName,
+      readCapacity: dynamodbReadWrite,
+      billingMode: dynamodb.BillingMode.PROVISIONED,
+    });
+
+    const myBucket = new s3.Bucket(this, "crudApp", {
+      versioned: false,
+      bucketName,
+      publicReadAccess: true,
+      websiteIndexDocument: "index.html",
     });
   }
 }
