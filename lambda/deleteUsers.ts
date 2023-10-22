@@ -20,7 +20,7 @@ exports.handler = async (event: any, context: any, callback: any) => {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Methods": "DELETE, OPTIONS",
         "Access-Control-Allow-Origin": "*",
       },
       body: JSON.stringify(data),
