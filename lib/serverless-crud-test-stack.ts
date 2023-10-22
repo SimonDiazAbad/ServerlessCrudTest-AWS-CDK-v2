@@ -96,14 +96,25 @@ export class ServerlessCrudTestStack extends Stack {
       handler: "readUsers.handler",
     });
 
+    const deleteLambda = new lambda.Function(this, "deleteHandler", {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset("lambda"),
+      environment: lambdaConst,
+      reservedConcurrentExecutions: concurrency,
+      handler: "deleteUsers.handler",
+    });
+
     // integrations
     const apiGetIntgr = new apigateway.LambdaIntegration(readLambda);
+    const apiDeleteIntgr = new apigateway.LambdaIntegration(deleteLambda);
 
     const usersApi = api.root.addResource("users");
 
     usersApi.addMethod("GET", apiGetIntgr);
+    usersApi.addMethod("DELETE", apiDeleteIntgr);
 
     // granting permissions
     table.grantReadData(readLambda);
+    table.grantFullAccess(deleteLambda);
   }
 }
