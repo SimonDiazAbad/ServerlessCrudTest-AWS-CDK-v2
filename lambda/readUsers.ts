@@ -4,10 +4,12 @@ const tableName = process.env.TABLE_NAME;
 const dynamo = new DynamoDB.DocumentClient();
 
 exports.handler = async (event: any, context: any, callback: any) => {
-  try{
-    const data = await dynamo.scan({
-      TableName: tableName!,
-    }).promise();
+  try {
+    const data = await dynamo
+      .scan({
+        TableName: tableName!,
+      })
+      .promise();
     const response = {
       statusCode: 200,
       headers: {
@@ -15,12 +17,11 @@ exports.handler = async (event: any, context: any, callback: any) => {
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify(data.Items);
+      body: JSON.stringify(data.Items),
       isBase64Encoded: false,
-
-    }
+    };
     callback(null, response);
-  } catch(err){
+  } catch (err) {
     callback(err, null);
   }
 };
