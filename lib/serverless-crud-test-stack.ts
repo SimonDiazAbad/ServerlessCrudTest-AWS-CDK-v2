@@ -5,9 +5,12 @@ import {
   aws_dynamodb as dynamodb,
   aws_apigateway as apigateway,
   aws_s3 as s3,
+  aws_s3_deployment as s3dep,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { join } from "path";
+
+const appDir = join(__dirname, "path", "to", "my-project");
 
 interface EvnStackProps extends StackProps {
   prod: boolean;
@@ -77,5 +80,30 @@ export class ServerlessCrudTestStack extends Stack {
       publicReadAccess: true,
       websiteIndexDocument: "index.html",
     });
+
+    const deployment = new s3dep.BucketDeployment(this, "deploy", {
+      sources: [s3dep.Source.asset(appDir)],
+      destinationBucket: myBucket,
+      destinationKeyPrefix: "",
+    });
+
+    // crud lambdas
+    const readLambda = new lambda.Function(this, "readHandler", {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      code: lambda.Code.fromAsset("lambda"),
+      environment: lambdaConst,
+      reservedConcurrentExecutions: concurrency,
+      handler: "readUsers.handler",
+    });
+
+    // integrations
+    const apiGetIntgr = new apigateway.LambdaIntegration(readLambda);
+
+    const usersApi = api.root.addResource("users");
+
+    usersApi.addMethod("GET", apiGetIntgr);
+
+    // granting permissions
+    table.grantReadData(readLambda);
   }
 }
