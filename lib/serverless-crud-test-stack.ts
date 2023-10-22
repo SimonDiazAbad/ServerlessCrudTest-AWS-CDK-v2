@@ -88,6 +88,9 @@ export class ServerlessCrudTestStack extends Stack {
     });
 
     // crud lambdas
+    const usersApi = api.root.addResource("users");
+
+    // GET USERS
     const readLambda = new lambda.Function(this, "readHandler", {
       runtime: lambda.Runtime.NODEJS_18_X,
       code: lambda.Code.fromAsset("lambda"),
@@ -96,6 +99,11 @@ export class ServerlessCrudTestStack extends Stack {
       handler: "readUsers.handler",
     });
 
+    const apiGetIntgr = new apigateway.LambdaIntegration(readLambda);
+    usersApi.addMethod("GET", apiGetIntgr);
+    table.grantReadData(readLambda);
+
+    // DELETE USERS
     const deleteLambda = new lambda.Function(this, "deleteHandler", {
       runtime: lambda.Runtime.NODEJS_18_X,
       code: lambda.Code.fromAsset("lambda"),
@@ -104,17 +112,8 @@ export class ServerlessCrudTestStack extends Stack {
       handler: "deleteUsers.handler",
     });
 
-    // integrations
-    const apiGetIntgr = new apigateway.LambdaIntegration(readLambda);
     const apiDeleteIntgr = new apigateway.LambdaIntegration(deleteLambda);
-
-    const usersApi = api.root.addResource("users");
-
-    usersApi.addMethod("GET", apiGetIntgr);
     usersApi.addMethod("DELETE", apiDeleteIntgr);
-
-    // granting permissions
-    table.grantReadData(readLambda);
     table.grantFullAccess(deleteLambda);
   }
 }
