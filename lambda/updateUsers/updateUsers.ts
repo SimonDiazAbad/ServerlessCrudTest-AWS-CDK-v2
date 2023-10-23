@@ -8,7 +8,22 @@ exports.handler = async (event: any, context: any, callback: any) => {
     id: event.pathParameters.id,
   };
 
-  const { name, email, password } = JSON.parse(event.body);
+  const body = JSON.parse(event.body);
+
+  let updateExpression = "SET ";
+  const expressionAttributeNames: { [key: string]: string } = {};
+  const expressionAttributeValues: { [key: string]: any } = {};
+
+  Object.keys(body).forEach((attribute, index) => {
+    const attributeKey = `#${attribute}`;
+    const attributeValue = `:${attribute}`;
+    expressionAttributeNames[attributeKey] = attribute;
+    expressionAttributeValues[attributeValue] = body[attribute];
+    updateExpression += `${attributeKey} = ${attributeValue}`;
+    if (index !== Object.keys(body).length - 1) {
+      updateExpression += ", ";
+    }
+  });
 
   try {
     // Update user
@@ -16,18 +31,9 @@ exports.handler = async (event: any, context: any, callback: any) => {
       .update({
         TableName: tableName!,
         Key: key,
-        UpdateExpression:
-          "SET #name = :name, #email = :email, #password = :password",
-        ExpressionAttributeNames: {
-          "#name": "name",
-          "#email": "email",
-          "#password": "password",
-        },
-        ExpressionAttributeValues: {
-          ":name": name,
-          ":email": email,
-          ":password": password,
-        },
+        UpdateExpression: updateExpression,
+        ExpressionAttributeNames: expressionAttributeNames,
+        ExpressionAttributeValues: expressionAttributeValues,
         ReturnValues: "ALL_NEW",
       })
       .promise();
