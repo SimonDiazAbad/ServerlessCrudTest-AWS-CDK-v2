@@ -148,5 +148,25 @@ export class ServerlessCrudTestStack extends Stack {
       authorizationType: apigateway.AuthorizationType.NONE,
     });
     table.grantWriteData(createUsersLambda);
+
+    // UPDATE USERS
+    const updateUsersLambda = new lambdaNodeJs.NodejsFunction(
+      this,
+      "updateUsersHandler",
+      {
+        runtime: lambda.Runtime.NODEJS_18_X,
+        entry: join(__dirname, "..", "lambda", "updateUsers", "updateUsers.ts"),
+        environment: lambdaConst,
+        // reservedConcurrentExecutions: concurrency,
+        handler: "index.handler",
+      }
+    );
+
+    const apiUpdateIntgr = new apigateway.LambdaIntegration(updateUsersLambda);
+    usersApiRoot.addMethod("PATCH", apiUpdateIntgr, {
+      authorizationType: apigateway.AuthorizationType.NONE,
+    });
+
+    table.grantWriteData(updateUsersLambda);
   }
 }

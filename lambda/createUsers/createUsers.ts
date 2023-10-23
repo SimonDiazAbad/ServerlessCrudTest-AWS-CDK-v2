@@ -1,18 +1,14 @@
 import { DynamoDB } from "aws-sdk";
-import { getRandomValues } from "crypto";
+import { randomBytes } from "crypto";
 
 const tableName = process.env.TABLE_NAME;
 const region = process.env.AWS_REGION;
 const dynamo = new DynamoDB.DocumentClient();
 
 exports.handler = async (event: any, context: any, callback: any) => {
-  const key = {
-    id: event.pathParameters.id,
-  };
-
   const { name, email, password } = JSON.parse(event.body);
   const user = {
-    id: getRandomValues(new Uint8Array(32)).toString(),
+    id: randomBytes(16).toString("hex"),
     name,
     email,
     password,
@@ -30,14 +26,23 @@ exports.handler = async (event: any, context: any, callback: any) => {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Credentials": "true",
         "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ success: true, data: user }),
       isBase64Encoded: false,
     };
     callback(null, response);
   } catch (err) {
-    callback(err, null);
+    const errorResponse = {
+      statusCode: 500,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({ success: false, error: err }),
+      isBase64Encoded: false,
+    };
+    callback(null, errorResponse);
   }
 };
