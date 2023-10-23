@@ -163,7 +163,7 @@ export class ServerlessCrudTestStack extends Stack {
     );
 
     const apiUpdateIntgr = new apigateway.LambdaIntegration(updateUsersLambda);
-    usersApiRoot.addMethod("PATCH", apiUpdateIntgr, {
+    usersApi.addMethod("PATCH", apiUpdateIntgr, {
       authorizationType: apigateway.AuthorizationType.NONE,
     });
 
